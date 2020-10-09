@@ -34,15 +34,15 @@ module Kafka
 
   # Internal class to prevent the GC from deleting the objects from the callback.
   class PreventGC
-    @prevent_gc = Set(Pointer(Void)).new
+    @prevent_gc = Set(Void*).new
     @prevent_gc_mutex = Mutex.new
 
-    def protect_from_gc(box : Pointer(Void)) : Pointer(Void)
+    def protect_from_gc(box : Void*) : Void*
       @prevent_gc_mutex.synchronize { @prevent_gc.add(box) }
       box
     end
 
-    def allow_gc(box : Pointer(Void)) : Nil
+    def allow_gc(box : Void*) : Nil
       @prevent_gc_mutex.synchronize { @prevent_gc.delete(box) }
     end
   end
@@ -64,8 +64,7 @@ module Kafka
           callback = ->(_handle : LibKafkaC::KafkaHandle, kafka_message : LibKafkaC::Message*, _conf_opaque : Void*) {
             msg = kafka_message.value
             boxed_arg = msg._priv
-            channel, prevent_gc = Box({Channel(DeliveryReport), PreventGC}).unbox(boxed_arg)
-            prevent_gc.allow_gc(boxed_arg)
+            channel = NativeResources.unbox_channel_and_allow_gc(boxed_arg)
             begin
               channel.send(DeliveryReport.new(LibKafkaC::ResponseError.new(msg.err)))
             rescue Channel::ClosedError
@@ -91,8 +90,14 @@ module Kafka
         !@delivery_report_handler.nil?
       end
 
-      def box(channel : Channel(DeliveryReport)) : Pointer(Void)
+      def box_channel_and_protect_from_gc(channel : Channel(DeliveryReport)) : Void*
         @prevent_gc.protect_from_gc(Box.box({channel, @prevent_gc}))
+      end
+
+      def self.unbox_channel_and_allow_gc(box : Void*) : Channel(DeliveryReport)
+        channel, prevent_gc = Box({Channel(DeliveryReport), PreventGC}).unbox(box)
+        prevent_gc.allow_gc(box)
+        channel
       end
 
       def finalize
@@ -188,11 +193,12 @@ module Kafka
       part = partition || LibKafkaC::PARTITION_UNASSIGNED
 
       delivery_report_channel = Channel(DeliveryReport).new(1)
-      delivery_report_callback_arg = @native.box(delivery_report_channel)
+      delivery_report_callback_arg = @native.box_channel_and_protect_from_gc(delivery_report_channel)
 
       res = LibKafkaC.produce(topic, part, flags, msg.to_unsafe, msg.size,
         key, (key.nil? ? 0 : key.size), delivery_report_callback_arg)
       if res != LibKafkaC::OK
+        NativeResources.unbox_channel_and_allow_gc(delivery_report_callback_arg)
         raise KafkaException.new("Failed to enqueue message", Errno.value)
       end
       ensure_polling_fiber_is_running
