@@ -1,7 +1,8 @@
 name: kafka
-version: 0.1.0
+version: 0.2.0
 
 authors:
+  - Philipp Claßen <philipp.classen@posteo.de>
   - Alex Malone <alex.malone@ziften.com>
 
 libraries:
