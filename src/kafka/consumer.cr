@@ -17,21 +17,19 @@ module Kafka
     def initialize(@conf : Config)
       @running = false
       @topics = nil
-
-      @pErrStr = LibC.malloc(ERRLEN).as(UInt8*)
+      @p_err_str = LibC.malloc(ERRLEN).as(UInt8*)
 
       @topic_conf = LibKafkaC.topic_conf_new
       # Set default topic config for pattern-matched topics.
       LibKafkaC.conf_set_default_topic_conf(conf, @topic_conf)
-      @handle = LibKafkaC.kafka_new(LibKafkaC::TYPE_CONSUMER, conf, @pErrStr, ERRLEN)
+      @handle = LibKafkaC.kafka_new(LibKafkaC::TYPE_CONSUMER, conf, @p_err_str, ERRLEN)
       raise "Kafka: Unable to create new consumer" if @handle.not_nil!.address == 0_u64
     end
 
-    def add_brokers(brokerList : String)
-      if 0 == LibKafkaC.brokers_add(@handle, brokerList)
+    def add_brokers(broker_list : String)
+      if 0 == LibKafkaC.brokers_add(@handle, broker_list)
         raise "No valid brokers specified"
       end
-
       LibKafkaC.poll_set_consumer(@handle)
     end
 
@@ -56,20 +54,15 @@ module Kafka
     # returns message or nil
     def consume(timeout_ms : Int32 = 25) : Message?
       raise "No topic set" unless @topics
-
       @running = true
-
       msg = LibKafkaC.consumer_poll @handle, timeout_ms
-
-      return Message.new msg
+      Message.new msg
     end
 
     # closes the consumer if running.
     def stop
       raise "Session not active" unless @running
-
       @running = false
-
       LibKafkaC.consumer_close(@handle)
     end
 
@@ -80,18 +73,14 @@ module Kafka
 
     # :nodoc:
     def finalize
-      begin
-        LibC.free(@pErrStr)
-
-        LibKafkaC.topic_partition_list_destroy(@topics) if @topics
-
-        LibKafkaC.kafka_destroy(@handle) if @handle
-      end
+      LibC.free(@p_err_str)
+      LibKafkaC.topic_partition_list_destroy(@topics) if @topics
+      LibKafkaC.kafka_destroy(@handle) if @handle
     end
 
     # :nodoc:
     def to_unsafe
-      return @handle
+      @handle
     end
   end
 end
