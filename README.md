@@ -4,6 +4,8 @@ Crystal-lang wrapper for the
 [Apache Kafka](https://kafka.apache.org/) client.
 Contributions welcome.
 
+[![Build Status](https://travis-ci.org/philipp-classen/kafka.cr.svg?branch=master)](https://travis-ci.org/philipp-classen/kafka.cr)
+
 ## Installation
 
 Add this to your application's `shard.yml`:
