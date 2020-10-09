@@ -1,10 +1,7 @@
 require "./lib_rdkafka.cr"
 
-
 module Kafka
-
   class Message
-
     def initialize(@msg : LibKafkaC::Message*)
     end
 
@@ -30,9 +27,8 @@ module Kafka
       @msg
     end
 
-    def finalize()
+    def finalize
       LibKafkaC.message_destroy(@msg) unless @msg.null?
     end
   end
-
 end
