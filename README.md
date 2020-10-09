@@ -4,14 +4,6 @@ Crystal-lang wrapper for the
 [Apache Kafka](https://kafka.apache.org/) client.
 Contributions welcome.
 
-NOTE: there are a couple of other kafka.cr projects.  If I had seen them, I would have worked with them or contributed to them instead.  In any case, this was a good way to help me learn the C-bindings of Crystal.
- - [decioferreira/kafka.cr](https://github.com/decioferreira/kafka.cr)
- - [maiha/kafka.cr](https://github.com/maiha/kafka.cr)
-
-STATUS:
- - Simple polling producer works for keys,values that are strings.
- - Simple polling consumer works for keys,values that are strings.
-
 ## Installation
 
 Add this to your application's `shard.yml`:
@@ -19,7 +11,7 @@ Add this to your application's `shard.yml`:
 ```yaml
 dependencies:
   kafka:
-    github: packetzero/kafka.cr
+    github: philipp-classen/kafka.cr
 ```
 
 ## Usage
@@ -34,6 +26,20 @@ See examples in [kafka_examples](https://github.com/packetzero/kafka_examples.cr
 
 TODO: Write development instructions here
 
+## Overview of other implementations
+
+If you miss some features, please check out the others implementations that exist for Crystal:
+
+* [maiha/kafka.cr](https://github.com/maiha/kafka.cr)
+* [decioferreira/kafka.cr](https://github.com/decioferreira/kafka.cr)
+
+Depending on your use case, one of them might have what you need. You can also open
+an issue here, but I cannot promise to find the time to implement it.
+
+Of course, pull requests to add missing features are always welcome.
+As kafka.cr is a wrapper over librdkafka, the full functionality of the C library is available.
+What it needs is to write the C bindings and expose it in Crystal.
+
 ## Contributing
 
 1. Fork it ( https://github.com/packetzero/kafka.cr/fork )
@@ -44,4 +50,5 @@ TODO: Write development instructions here
 
 ## Contributors
 
-- [packetzero](https://github.com/packetzero) Alex Malone - creator, maintainer
+- [packetzero](https://github.com/packetzero) Alex Malone - creator
+- [Philipp Claßen](https://github.com/philipp-classen) - maintainer
